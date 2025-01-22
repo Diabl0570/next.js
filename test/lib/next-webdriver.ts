@@ -150,7 +150,10 @@ export default async function webdriver(
     const checkHydrated = async () => {
       await browser.evalAsync(function () {
         var callback = arguments[arguments.length - 1]
-
+        const devtools = window['__playwright_devtools__']
+        if (devtools) {
+          devtools.NetworkManager.preserveLog = true
+        }
         // if it's not a Next.js app return
         if (
           !document.documentElement.innerHTML.includes('__NEXT_DATA__') &&

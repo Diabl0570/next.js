@@ -1,16 +1,16 @@
-import { BrowserInterface, Event } from './base'
 import fs from 'fs-extra'
+import path from 'path'
 import {
-  chromium,
-  webkit,
-  firefox,
   Browser,
   BrowserContext,
-  Page,
   ElementHandle,
+  Page,
+  chromium,
   devices,
+  firefox,
+  webkit,
 } from 'playwright'
-import path from 'path'
+import { BrowserInterface, Event } from './base'
 
 let page: Page
 let browser: Browser
@@ -246,7 +246,17 @@ export class Playwright extends BrowserInterface {
       // TODO: this doesn't seem to work (dev tools does not check the box as expected)
       const session = await context.newCDPSession(page)
       session.send('Network.setCacheDisabled', { cacheDisabled: true })
+      session.send('Network.setCacheDisabled', { cacheDisabled: true })
     }
+
+    // Keep logs preserved
+    await page.evaluate(() => {
+      // Access DevTools and set the 'Preserve log' checkbox
+      const devtools = window['__playwright_devtools__']
+      if (devtools) {
+        devtools.NetworkManager.preserveLog = true
+      }
+    })
 
     if (opts?.cpuThrottleRate) {
       const session = await context.newCDPSession(page)
