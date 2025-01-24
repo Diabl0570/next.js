@@ -28,7 +28,9 @@ describe('redirects and rewrites', () => {
         .waitForElementByCss('#cart')
       const url = new URL(await browser.url())
       console.log('url.pathname', url.pathname)
+      await browser.waitForElementByCss('#cart2')
       expect(url.pathname).toEndWith('cart/')
+      expect(url.pathname).toEndWith('block')
     })
 
     it('should rewrite internal from next.config.js correctly', async () => {

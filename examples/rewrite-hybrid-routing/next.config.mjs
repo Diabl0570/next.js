@@ -1,66 +1,66 @@
-import { knownBrands } from './app/knownBrands.mjs'
-import { localizedRewriteSegments } from './localizedPaths.mjs'
+import { knownBrands } from "./app/knownBrands.mjs";
+import { localizedRewriteSegments } from "./localizedPaths.mjs";
 import {
   supportedCountries,
   supportedLocales,
-} from './supportedLocales.next.config.mjs'
+} from "./supportedLocales.next.config.mjs";
 
-const externalUrl = `vercel-next-catch-all.vercel.app`
-// const externalUrl = `dundle.dev`
-const countries = supportedCountries.map((x) => x)
-const locales = supportedLocales.map((locale) => locale)
+// const externalUrl = `vercel-next-catch-all.vercel.app`
+const externalUrl = `dundle.dev`;
+const countries = supportedCountries.map((x) => x);
+const locales = supportedLocales.map((locale) => locale);
 
-const nextCountrySegment = `:country(${countries.join('|')})`
-const nextLocaleSegment = `:locale(${locales.join('|')})`
+const nextCountrySegment = `:country(${countries.join("|")})`;
+const nextLocaleSegment = `:locale(${locales.join("|")})`;
 
 // const countrySegment = `:country((?:[a-zA-Z]{2}))`;
 // const localeSegment = `:locale((?:[a-zA-Z]{2}))`;
 const categorySegment = `:category(${localizedRewriteSegments.category.join(
-  '|'
-)})`
-const legalSegment = `:legal(${localizedRewriteSegments.legal.join('|')})`
-const eventSegment = `:event(${localizedRewriteSegments.events.join('|')})`
-const brandSegment = `:brand(${knownBrands.join('|')})`
-const cartSegment = `:path(${localizedRewriteSegments.cart.join('|')})`
-const checkoutSegment = `:path(${localizedRewriteSegments.checkout.join('|')})`
+  "|",
+)})`;
+const legalSegment = `:legal(${localizedRewriteSegments.legal.join("|")})`;
+const eventSegment = `:event(${localizedRewriteSegments.events.join("|")})`;
+const brandSegment = `:brand(${knownBrands.join("|")})`;
+const cartSegment = `:path(${localizedRewriteSegments.cart.join("|")})`;
+const checkoutSegment = `:path(${localizedRewriteSegments.checkout.join("|")})`;
 
 const makeDynamic = (rule) => {
   const destinationSegments = rule.destination
-    .split('/')
+    .split("/")
     .filter(Boolean)
-    .join('/')
+    .join("/");
 
   return [
     {
       ...rule,
       has: [
         {
-          type: 'query',
-          key: 'currency',
+          type: "query",
+          key: "currency",
         },
       ],
-      destination: `/${destinationSegments}/${'dynamic'}`,
+      destination: `/${destinationSegments}/${"dynamic"}`,
     },
     {
       ...rule,
       has: [
         {
-          type: 'query',
-          key: 'c',
+          type: "query",
+          key: "c",
         },
       ],
-      destination: `/${destinationSegments}/${'dynamic'}`,
+      destination: `/${destinationSegments}/${"dynamic"}`,
     },
     { ...rule },
-  ]
-}
+  ];
+};
 
 const makeLocaleDynamic = (rule) => {
-  const sourceSegments = rule.source.split('/').filter(Boolean).join('/')
+  const sourceSegments = rule.source.split("/").filter(Boolean).join("/");
   const destinationSegments = rule.destination
-    .split('/')
+    .split("/")
     .filter(Boolean)
-    .join('/')
+    .join("/");
 
   return [
     {
@@ -69,33 +69,33 @@ const makeLocaleDynamic = (rule) => {
     },
     {
       source: `/${nextCountrySegment}/${sourceSegments}`,
-      destination: `/:country/${'default'}/${destinationSegments}`,
+      destination: `/:country/${"default"}/${destinationSegments}`,
     },
     {
       source: `/${sourceSegments}`,
-      destination: `/us/${'default'}/${destinationSegments}`,
+      destination: `/us/${"default"}/${destinationSegments}`,
     },
-  ]
-}
+  ];
+};
 
 const makeCommerceLayerHybridNavigation = (rule) => {
-  const sourceSegments = rule.source.split('/').filter(Boolean).join('/')
+  const sourceSegments = rule.source.split("/").filter(Boolean).join("/");
   const destinationSegments = rule.destination
-    .split('/')
+    .split("/")
     .filter(Boolean)
-    .join('/')
+    .join("/");
 
-  const pathKey = 'path'
+  const pathKey = "path";
 
-  const commerceLayerCountries = ['nl'].map((x) => x.toLowerCase())
+  const commerceLayerCountries = ["nl"].map((x) => x.toLowerCase());
   const countriesWithoutCommerceLayer = countries.filter(
-    (country) => !commerceLayerCountries.includes(country)
-  )
+    (country) => !commerceLayerCountries.includes(country),
+  );
 
   const nuxtCartCountries = `:country(${countriesWithoutCommerceLayer.join(
-    '|'
-  )})`
-  const nextCartCountries = `:country(${commerceLayerCountries.join('|')})`
+    "|",
+  )})`;
+  const nextCartCountries = `:country(${commerceLayerCountries.join("|")})`;
 
   return [
     // Give next precedence because the list is shorter
@@ -105,7 +105,7 @@ const makeCommerceLayerHybridNavigation = (rule) => {
     },
     {
       source: `/${nextCartCountries}/${sourceSegments}`,
-      destination: `/:country/${'default'}/${destinationSegments}/`,
+      destination: `/:country/${"default"}/${destinationSegments}/`,
     },
     {
       source: `/${nuxtCartCountries}/${nextLocaleSegment}/${sourceSegments}`,
@@ -120,13 +120,13 @@ const makeCommerceLayerHybridNavigation = (rule) => {
       source: `/${sourceSegments}`,
       destination: `https://${externalUrl}/:${pathKey}/`,
     },
-  ]
-}
+  ];
+};
 
 const makeLocaleDynamicWithRules = (rule) => {
-  const localeRules = makeLocaleDynamic(rule)
-  return localeRules.flatMap((rule) => makeDynamic(rule))
-}
+  const localeRules = makeLocaleDynamic(rule);
+  return localeRules.flatMap((rule) => makeDynamic(rule));
+};
 
 /** @type {import('next').NextConfig}  */
 const nextConfig = {
@@ -138,7 +138,7 @@ const nextConfig = {
     },
   },
   experimental: {
-    optimizePackageImports: ['ua-parser-js'],
+    optimizePackageImports: ["ua-parser-js"],
     serverActions: {
       allowedOrigins: [externalUrl],
     },
@@ -163,33 +163,33 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  transpilePackages: ['ui'],
+  transpilePackages: ["ui"],
   headers: async () => {
-    return []
+    return [];
   },
   async rewrites() {
-    const eventSlugsRes = ['black-friday']
-    const eventSlugs = eventSlugsRes?.join('|') || 'black-friday'
+    const eventSlugsRes = ["black-friday"];
+    const eventSlugs = eventSlugsRes?.join("|") || "black-friday";
 
     const legalPages = [
-      'privacy-policy',
-      'return-policy',
-      'terms-and-conditions',
-    ]
-    const legalSlugs = legalPages?.join('|')
+      "privacy-policy",
+      "return-policy",
+      "terms-and-conditions",
+    ];
+    const legalSlugs = legalPages?.join("|");
 
     return {
       beforeFiles: [
         {
-          source: '/_nuxt/:path*',
+          source: "/_nuxt/:path*",
           destination: `https://${externalUrl}/_nuxt/:path*`,
         },
         {
-          source: '/magazine/_nuxt/:path*',
+          source: "/magazine/_nuxt/:path*",
           destination: `https://${externalUrl}/magazine/_nuxt/:path*`,
         },
         {
-          source: '/manifest.webmanifest',
+          source: "/manifest.webmanifest",
           destination: `https://${externalUrl}/manifest.webmanifest`,
         },
         {
@@ -201,26 +201,26 @@ const nextConfig = {
       afterFiles: [
         ...makeCommerceLayerHybridNavigation({
           source: `/${cartSegment}`,
-          destination: '/cart/',
+          destination: "/cart/",
         }),
         ...makeCommerceLayerHybridNavigation({
           source: `/${checkoutSegment}`,
-          destination: '/payment/',
+          destination: "/payment/",
         }),
         // eventsRewrites,
         ...makeLocaleDynamic({
           source: `/${eventSegment}/:path(${eventSlugs})`,
-          destination: '/category/event/event/:path*/',
+          destination: "/category/event/event/:path*/",
         }),
         // categoryAndSubCategoryRewrites,
         ...makeLocaleDynamic({
           source: `/${categorySegment}/:path*`,
-          destination: '/category/:path*/',
+          destination: "/category/:path*/",
         }),
         // legal pages
         ...makeLocaleDynamic({
           source: `/${legalSegment}/:path(${legalSlugs})`,
-          destination: '/legal/:path/',
+          destination: "/legal/:path/",
         }),
         // brand page
         ...makeLocaleDynamicWithRules({
@@ -239,42 +239,42 @@ const nextConfig = {
         }),
         ...makeLocaleDynamic({
           source:
-            '/:legal(legal|lainmukainen)/:slug(privacybeleid|privacy|privacy-policy|tietosuojailmoitus|informativa-sulla-privacy|privacidade)',
-          destination: '/legal/privacy-policy',
+            "/:legal(legal|lainmukainen)/:slug(privacybeleid|privacy|privacy-policy|tietosuojailmoitus|informativa-sulla-privacy|privacidade)",
+          destination: "/legal/privacy-policy",
         }),
         ...makeLocaleDynamic({
           source:
-            '/:legal(legal)/:slug(returnpolicy|returnpolicy_fr|return-policy|devolucao)',
-          destination: '/legal/return-policy',
+            "/:legal(legal)/:slug(returnpolicy|returnpolicy_fr|return-policy|devolucao)",
+          destination: "/legal/return-policy",
         }),
         ...makeLocaleDynamic({
           source:
-            '/:legal(legal)/:slug(algemenevoorwaarden|terms-and-conditions|condiciones-generales|termos-e-condicoes)',
-          destination: '/legal/terms-and-conditions',
+            "/:legal(legal)/:slug(algemenevoorwaarden|terms-and-conditions|condiciones-generales|termos-e-condicoes)",
+          destination: "/legal/terms-and-conditions",
         }),
         {
-          source: '/:path*',
+          source: "/:path*",
           destination: `https://${externalUrl}/:path*/`,
           missing: [
             {
-              type: 'query',
-              key: '_rsc',
+              type: "query",
+              key: "_rsc",
             },
           ],
         },
       ],
       fallback: [
         {
-          source: '/:path*',
+          source: "/:path*",
           destination: `https://${externalUrl}/:path*/`,
         },
       ],
-    }
+    };
   },
 
   async redirects() {
-    return []
+    return [];
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;
