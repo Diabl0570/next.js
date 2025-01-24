@@ -1,3 +1,4 @@
+import { parse } from "path-to-regexp";
 import { knownBrands } from "./app/knownBrands.mjs";
 import { localizedRewriteSegments } from "./localizedPaths.mjs";
 import {
@@ -36,20 +37,30 @@ const makeDynamic = (rule) => {
       has: [
         {
           type: "query",
-          key: "currency",
+          key: constants.UrlParams.USER_PREFERENCES_CURRENCY_QUERY_PARAM,
         },
       ],
-      destination: `/${destinationSegments}/${"dynamic"}`,
+      destination: `/${destinationSegments}/${constants.UrlSegmentsForRewriting.DYNAMIC}`,
     },
     {
       ...rule,
       has: [
         {
           type: "query",
-          key: "c",
+          key: constants.UrlParams.COUNTRY_OR_CURRENCY_QUERY_PARAM,
         },
       ],
-      destination: `/${destinationSegments}/${"dynamic"}`,
+      destination: `/${destinationSegments}/${constants.UrlSegmentsForRewriting.DYNAMIC}`,
+    },
+    {
+      ...rule,
+      has: [
+        {
+          type: "cookie",
+          key: constants.Cookies.VERCEL_FEATURE_FLAGS_OVERRIDE,
+        },
+      ],
+      destination: `/${destinationSegments}/${constants.UrlSegmentsForRewriting.DYNAMIC}`,
     },
     { ...rule },
   ];
@@ -69,11 +80,11 @@ const makeLocaleDynamic = (rule) => {
     },
     {
       source: `/${nextCountrySegment}/${sourceSegments}`,
-      destination: `/:country/${"default"}/${destinationSegments}`,
+      destination: `/:country/${constants.UrlSegmentsForRewriting.DEFAULT_LOCALE_PLACEHOLDER}/${destinationSegments}`,
     },
     {
       source: `/${sourceSegments}`,
-      destination: `/us/${"default"}/${destinationSegments}`,
+      destination: `/us/${constants.UrlSegmentsForRewriting.DEFAULT_LOCALE_PLACEHOLDER}/${destinationSegments}`,
     },
   ];
 };
@@ -85,11 +96,15 @@ const makeCommerceLayerHybridNavigation = (rule) => {
     .filter(Boolean)
     .join("/");
 
-  const pathKey = "path";
+  const path = `/${sourceSegments}`;
+  const tokens = parse(path, { end: true });
+  const pathKey = tokens[0].name;
 
-  const commerceLayerCountries = ["nl"].map((x) => x.toLowerCase());
+  const commerceLayerCountries = ["mt"].map((x) =>
+    x.toLowerCase(),
+  );
   const countriesWithoutCommerceLayer = countries.filter(
-    (country) => !commerceLayerCountries.includes(country),
+    (countries) => !commerceLayerCountries.includes(countries),
   );
 
   const nuxtCartCountries = `:country(${countriesWithoutCommerceLayer.join(
@@ -101,24 +116,24 @@ const makeCommerceLayerHybridNavigation = (rule) => {
     // Give next precedence because the list is shorter
     {
       source: `/${nextCartCountries}/${nextLocaleSegment}/${sourceSegments}/`,
-      destination: `/:country/:locale/${destinationSegments}/`,
+      destination: `/:country/:locale/${destinationSegments}`,
     },
     {
       source: `/${nextCartCountries}/${sourceSegments}`,
-      destination: `/:country/${"default"}/${destinationSegments}/`,
+      destination: `/:country/${constants.UrlSegmentsForRewriting.DEFAULT_LOCALE_PLACEHOLDER}/${destinationSegments}/`,
     },
     {
       source: `/${nuxtCartCountries}/${nextLocaleSegment}/${sourceSegments}`,
-      destination: `https://${externalUrl}/:country/:locale/:${pathKey}/`,
+      destination: `${nuxtUrl}/:country/:locale/:${pathKey}/`,
     },
     {
       source: `/${nuxtCartCountries}/${sourceSegments}`,
-      destination: `https://${externalUrl}/:country/:${pathKey}/`,
+      destination: `${nuxtUrl}/:country/:${pathKey}/`,
     },
     // the default is a fallback to the nuxt cart
     {
       source: `/${sourceSegments}`,
-      destination: `https://${externalUrl}/:${pathKey}/`,
+      destination: `${nuxtUrl}/:${pathKey}/`,
     },
   ];
 };
